@@ -42,7 +42,7 @@ export function AgentPanel({ live }: { live: Live }) {
               <div>
                 <div className="text-base font-bold">Research fee · x402 on Cardano</div>
                 <div className="text-[15px] text-ink-2">
-                  {fee.status === "pending" ? "Signed by Ana's wallet, settling on preprod…" : fee.status === "paid" ? "Settled on Cardano preprod" : "Did not settle"}
+                  {fee.status === "pending" ? "Signed by Vasiliy's wallet, settling on preprod…" : fee.status === "paid" ? "Settled on Cardano preprod" : "Did not settle"}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -85,9 +85,9 @@ export function AgentPanel({ live }: { live: Live }) {
           {rules && (
             <motion.div key="rules" {...rise} className="mt-3 flex flex-col gap-2 rounded-xl bg-rule-bg px-4 py-3">
               <Eyebrow>Passenger rights checked</Eyebrow>
-              {rules.rules.map(r => (
-                <div key={r.id} className={`text-[15px] leading-snug ${r.applies ? "text-ink" : "text-muted line-through decoration-1"}`}>
-                  <strong>{r.applies ? "✓" : "–"} {r.title}:</strong> {r.detail}
+              {rules.rules.filter(r => r.applies).map(r => (
+                <div key={r.id} className="text-[15px] leading-snug text-ink">
+                  <strong>✓ {r.title}:</strong> {r.detail}
                 </div>
               ))}
               <div className="text-[15px] leading-snug text-rule-fg">
@@ -172,9 +172,9 @@ function TripCard({ trip, open, onToggle }: { trip: Trip; open: boolean; onToggl
               )}
               <div className="rounded-xl bg-rule-bg px-3 py-2.5">
                 <Eyebrow>Jurisdiction check</Eyebrow>
-                {trip.jurisdiction.rules.map(r => (
-                  <div key={r.id} className={`mt-1 text-[14px] leading-snug ${r.applies ? "text-ink" : "text-muted"}`}>
-                    <strong>{r.applies ? "✓" : "–"} {r.title}:</strong> {r.detail}
+                {trip.jurisdiction.rules.filter(r => r.applies).map(r => (
+                  <div key={r.id} className="mt-1 text-[14px] leading-snug text-ink">
+                    <strong>✓ {r.title}:</strong> {r.detail}
                   </div>
                 ))}
                 {trip.status === "PaidOut" && trip.jurisdiction.airlineOwesEur && (
@@ -244,7 +244,7 @@ export function WalletStrip({ live }: { live: Live }) {
   const w = live.wallets;
   const eur = (n: number) => `€${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
   const items = [
-    { k: "Ana's wallet", v: w?.ana.display, e: w && eur(w.ana.eur), href: w && `https://preprod.cardanoscan.io/address/${w.ana.address}` },
+    { k: "Vasiliy's wallet", v: w?.traveller.display, e: w && eur(w.traveller.eur), href: w && `https://preprod.cardanoscan.io/address/${w.traveller.address}` },
     { k: "Cover pool", v: w?.pool.display, e: w && eur(w.pool.eur), href: w && `https://preprod.cardanoscan.io/address/${w.pool.address}` },
   ];
   return (
@@ -258,7 +258,7 @@ export function WalletStrip({ live }: { live: Live }) {
                 {i.v ?? "…"}
               </motion.span>
             </AnimatePresence>
-            <span className="block font-mono text-[12px] text-muted">{i.e ? `≈ ${i.e} in the demo` : "Cardano preprod"}</span>
+            <span className="block font-mono text-[12px] text-muted">{i.e ? `≈ ${i.e}` : "Cardano preprod"}</span>
           </span>
         </a>
       ))}

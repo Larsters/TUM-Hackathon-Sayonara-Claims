@@ -64,6 +64,15 @@ export const checkJurisdiction = ({ fromCountry, toCountry, airlineIata, distanc
           : "Does not apply: the flight does not depart from Brazil",
     },
     {
+      id: "cdc",
+      title: "Brazil, Consumer Defense Code (CDC)",
+      applies: from === "BR" || to === "BR",
+      detail:
+        from === "BR" || to === "BR"
+          ? "Flight to or from Brazil: under Article 14 the airline is liable for service failures, and courts can award moral damages for long delays, but only through a lawsuit and when the harm is shown"
+          : "Does not apply: the flight neither departs from nor arrives in Brazil",
+    },
+    {
       id: "montreal",
       title: "Montreal Convention",
       applies: true,

@@ -1,5 +1,5 @@
 /**
- * Ana's past trips. LH 501 is real: it arrived 7h 08m late on 30 Oct 2026, and
+ * Vasiliy's past trips. LH 501 is real: it arrived 7h 08m late on 30 Oct 2026, and
  * we insured and settled it on testnet with its real signed AeroDataBox data
  * (a replay, since the policy was created after the flight had landed).
  */
@@ -51,7 +51,7 @@ export const buildHistory = () => {
         { kind: "Policy registered", chain: "Base Sepolia", hash: "0x254d0c8fcff1093abbe1befef210cf0a7c52bdcedb2f6105dc06d3bbef4a628b", explorer: basescan("0x254d0c8fcff1093abbe1befef210cf0a7c52bdcedb2f6105dc06d3bbef4a628b") },
         { kind: "Signed flight status bought (x402, 0.05 aUSD)", chain: "Base Sepolia", hash: "0x9a6ec2b5add4f5001c0e52122a148fda981c13d504e95e82d3f80ff1b5d67bf5", explorer: basescan("0x9a6ec2b5add4f5001c0e52122a148fda981c13d504e95e82d3f80ff1b5d67bf5") },
         { kind: "Policy settled: PaidOut, 428 min late", chain: "Base Sepolia", hash: "0xda8d73e8d276b9c7da9d5f23b57077a1cc93f76beb4172f229e9b718f602f4fe", explorer: basescan("0xda8d73e8d276b9c7da9d5f23b57077a1cc93f76beb4172f229e9b718f602f4fe") },
-        { kind: "Payout €250 (50 tADA) to Ana", chain: "Cardano preprod", hash: payout, explorer: cardanoscan(payout) },
+        { kind: "Payout €250 (50 tADA) to Vasiliy", chain: "Cardano preprod", hash: payout, explorer: cardanoscan(payout) },
       ],
     },
   ];

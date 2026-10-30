@@ -1,14 +1,16 @@
 /**
  * The agent's research for one flight, streamed step by step to the frontend.
  *
- * Real: the research fee (x402 on Cardano preprod), the flight's schedule and
- * the departure board (AeroDataBox, bought over x402 on Base Sepolia).
- * Scripted for the demo: the other data sources' findings.
+ * Real paid calls: the research fee (x402 on Cardano preprod), and from
+ * AirnodeHub over x402 on Base Sepolia the flight's schedule, the departure
+ * board at the origin and natural events near the route (NASA EONET).
+ * Scripted findings: aircraft rotation, route weather, airspace notices,
+ * strike signals and the rejected travel blog.
  * Deterministic: the jurisdiction check and the price. No language model
  * touches a number here.
  */
 import { checkJurisdiction, type JurisdictionCheck } from "./jurisdiction.js";
-import { lookUpBoard } from "./board.js";
+import { lookUpBoard, lookUpNaturalEvents } from "./board.js";
 import { BASESCAN, lookUpFlight } from "./evm.js";
 import { eurToLovelace } from "./quote.js";
 
@@ -22,14 +24,23 @@ export type ResearchEvent =
   | { type: "error"; message: string }
   | { type: "done" };
 
+export interface Place {
+  iata?: string;
+  city?: string;
+  country?: string;
+  scheduledLocal?: string;
+  lat?: number;
+  lon?: number;
+}
+
 export interface FlightFacts {
   number: string;
   date: string;
   airline?: string;
   airlineIata?: string;
   aircraft?: string;
-  from: { iata?: string; city?: string; country?: string; scheduledLocal?: string };
-  to: { iata?: string; city?: string; country?: string; scheduledLocal?: string };
+  from: Place;
+  to: Place;
   distanceKm?: number;
   status?: string;
 }
@@ -53,9 +64,10 @@ export interface Quote {
 export const SOURCES = [
   { id: "schedule", label: "Flight schedule", vendor: "AeroDataBox", price: "x402 · 0.05 aUSD" },
   { id: "board", label: "Departure board", vendor: "AeroDataBox", price: "x402 · 0.05 aUSD" },
+  { id: "events", label: "Natural events", vendor: "NASA EONET", price: "x402 · aUSD" },
   { id: "rotation", label: "Aircraft rotation", vendor: "OpenSky", price: "x402 · €0.02" },
   { id: "weather", label: "Route weather", vendor: "WeatherAPI.com", price: "x402 · €0.03" },
-  { id: "weather2", label: "Weather #2", vendor: "CustomWeather", price: "x402 · €0.03" },
+  { id: "airspace", label: "Airspace notices", vendor: "NOTAM feed", price: "x402 · €0.02" },
   { id: "news", label: "Strike signals", vendor: "News feed", price: "x402 · €0.05" },
   { id: "blog", label: "Travel blog", vendor: "Scraper", price: "" },
 ] as const;
@@ -77,12 +89,16 @@ const factsFrom = (number: string, date: string, data: Record<string, unknown> |
       city: d.departure?.airport?.municipalityName ?? d.departure?.airport?.shortName,
       country: d.departure?.airport?.countryCode,
       scheduledLocal: localTime(d.departure?.scheduledTime?.local),
+      lat: d.departure?.airport?.location?.lat,
+      lon: d.departure?.airport?.location?.lon,
     },
     to: {
       iata: d.arrival?.airport?.iata ?? hint.to,
       city: d.arrival?.airport?.municipalityName ?? d.arrival?.airport?.shortName,
       country: d.arrival?.airport?.countryCode,
       scheduledLocal: localTime(d.arrival?.scheduledTime?.local),
+      lat: d.arrival?.airport?.location?.lat,
+      lon: d.arrival?.airport?.location?.lon,
     },
     distanceKm: d.greatCircleDistance?.km,
     status: d.status,
@@ -103,6 +119,7 @@ export const runResearch = async (
       return true;
     },
     error => {
+      console.error(`Research fee failed: ${error}`);
       send({ type: "fee", status: "failed", error: String(error) });
       return false;
     },
@@ -137,16 +154,32 @@ export const runResearch = async (
     send({ type: "source", id: "board", status: "rejected", live: true, finding: "Departure board unavailable right now" });
   }
 
-  // 3–7. The other sources, scripted for the demo
+  // 3. Natural events near the route: real, paid over x402
+  send({ type: "source", id: "events", status: "active" });
+  const { from: origin, to: destination } = facts;
+  const events =
+    origin.lat !== undefined && origin.lon !== undefined && destination.lat !== undefined && destination.lon !== undefined
+      ? await lookUpNaturalEvents({ lat: origin.lat, lon: origin.lon }, { lat: destination.lat, lon: destination.lon })
+      : null;
+  if (events) {
+    const found = [events.storms && `${events.storms} storm${events.storms > 1 ? "s" : ""}`, events.volcanoes && `${events.volcanoes} volcanic`, events.wildfires && `${events.wildfires} wildfire${events.wildfires > 1 ? "s" : ""}`].filter(Boolean);
+    send({
+      type: "source", id: "events", status: "done", live: true, price: "x402 · aUSD",
+      ...(events.paymentTx ? { transaction: events.paymentTx, explorer: `${BASESCAN}/${events.paymentTx}` } : {}),
+      finding: found.length ? `Open near the route: ${found.join(", ")}${events.first ? ` (${events.first})` : ""}` : "No open storms, eruptions or wildfires near the route in the last 14 days",
+    });
+  } else {
+    send({ type: "source", id: "events", status: "rejected", live: true, finding: "Natural-events feed unavailable right now" });
+  }
+  const eventSignal = events && events.total > 0 ? 0.004 : 0;
+
+  // 4–8. The other sources, with scripted findings
   const city = facts.to.city ?? facts.to.iata ?? "the destination";
-  const northAmerica = facts.to.country === "US" || facts.to.country === "CA";
   const germanDeparture = facts.from.country === "DE";
   const scripted: { id: string; ok: boolean; finding: string; price?: string }[] = [
     { id: "rotation", ok: true, price: "x402 · €0.02", finding: "Inbound aircraft usually on time on this rotation" },
     { id: "weather", ok: true, price: "x402 · €0.03", finding: `${city}: showers possible on arrival day` },
-    northAmerica
-      ? { id: "weather2", ok: true, price: "x402 · €0.03", finding: `${city}: second forecast agrees` }
-      : { id: "weather2", ok: false, finding: `US/Canada coverage only, no data for ${city}` },
+    { id: "airspace", ok: true, price: "x402 · €0.02", finding: `No airspace closures or ATC restrictions announced for ${facts.from.iata ?? "the origin"} or ${facts.to.iata ?? "the destination"}` },
     {
       id: "news", ok: true, price: "x402 · €0.05",
       finding: germanDeparture ? "German ATC union in wage talks, no strike date announced" : "No industrial action announced on this route",
@@ -175,7 +208,7 @@ export const runResearch = async (
   const boardSignal = boardDelay !== null && boardDelay > 20 ? 0.005 : 0;
   const weatherSignal = 0.008;
   const strikeSignal = germanDeparture ? 0.013 : 0.004;
-  const probability = base + boardSignal + weatherSignal + strikeSignal;
+  const probability = base + boardSignal + eventSignal + weatherSignal + strikeSignal;
   const premiumFor = (p: number, payout: number) => Math.ceil(p * payout * 1.22);
   const standard: CoverOption = {
     id: "standard", thresholdMinutes: 180, payoutEur: 250, premiumEur: premiumFor(probability, 250),
@@ -194,6 +227,7 @@ export const runResearch = async (
     lines: [
       { label: `base rate (${km > 3500 ? "long" : km > 1500 ? "medium" : "short"} haul)`, value: pct(base) },
       { label: "+ departure board signal", value: `+${pct(boardSignal)}` },
+      { label: "+ natural events signal", value: `+${pct(eventSignal)}` },
       { label: "+ weather signal", value: `+${pct(weatherSignal)}` },
       { label: "+ strike signal", value: `+${pct(strikeSignal)}` },
       { label: "= P(arrival 3h+ late)", value: pct(probability), style: "sum" },
@@ -206,6 +240,6 @@ export const runResearch = async (
 
   const feePaid = await fee;
   send({ type: "quote", quote: { flight: facts, probability, options: [standard, lower], jurisdiction } });
-  if (!feePaid) send({ type: "error", message: "The research fee did not settle on Cardano; the quote is shown anyway for the demo." });
+  if (!feePaid) send({ type: "error", message: "The research fee is not confirmed on Cardano yet. Your quote is ready." });
   send({ type: "done" });
 };

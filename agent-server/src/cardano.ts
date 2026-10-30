@@ -27,11 +27,7 @@ const signingClient = (mnemonic: string) => {
   return client.withSeed({ mnemonic: mnemonic.trim().replace(/\s+/g, " ").toLowerCase() });
 };
 
-/**
- * Sends `lovelace` from the wallet of `mnemonic` to `to`, with `message` as
- * CIP-20 metadata (label 674), and returns the transaction hash.
- */
-export const pay = async ({ mnemonic, to, lovelace, message }: {
+const payOnce = async ({ mnemonic, to, lovelace, message }: {
   mnemonic: string;
   to: string;
   lovelace: bigint;
@@ -47,6 +43,24 @@ export const pay = async ({ mnemonic, to, lovelace, message }: {
   const submitBuilder = await signBuilder.sign();
   const hash = await submitBuilder.submit();
   return typeof hash === "string" ? hash : Buffer.from(hash.hash).toString("hex");
+};
+
+/**
+ * Sends `lovelace` from the wallet of `mnemonic` to `to`, with `message` as
+ * CIP-20 metadata (label 674), and returns the transaction hash. Right after
+ * another payment from the same wallet the provider can still list spent
+ * UTXOs and the submission fails, so it retries a few times.
+ */
+export const pay = async (params: Parameters<typeof payOnce>[0]) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await payOnce(params);
+    } catch (error) {
+      if (attempt >= 4) throw error;
+      console.error(`Payment attempt ${attempt} failed, retrying in 10 s: ${String(error).slice(0, 200)}`);
+      await new Promise(resolve => setTimeout(resolve, 10_000));
+    }
+  }
 };
 
 /** Lovelace held by `address`, read from Koios. */

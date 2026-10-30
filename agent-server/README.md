@@ -9,13 +9,13 @@ Built from the Cardano Foundation's [x402-express template](https://developers.c
 | `POST /demo/research` | Streams the research as server-sent events: the x402 fee (paid by Ana's agent), the flight schedule and the live departure board bought from **AeroDataBox over x402 in aUSD**, scripted extra sources, the jurisdiction check and the deterministic price | both |
 | `POST /demo/buy-policy` | Ana pays the premium to the pool (policy terms in CIP-20 metadata) **and** the policy is registered in `FlightDelayCover` | both |
 | `GET /demo/wallets` | tADA balances of Ana and the pool | Cardano preprod |
-| `GET /demo/history` | Ana's past trips: LH 501 Rio → Frankfurt, a replay of a real flight that landed 7h 08m late and was paid out | |
+| `GET /demo/history` | Vasiliy's past trips: LH 501 Rio → Frankfurt, a replay of a real flight that landed 7h 08m late and was paid out | |
 | `GET /demo/payouts` | Payouts the keeper sent | |
 | `npm run keeper` | Watches `PolicySettled` on Base Sepolia and sends each `PaidOut` payout from the pool to the traveller on Cardano, once | both |
 
-What is real and what is scripted in the research: the fee, the flight schedule and the departure board are real
-paid calls; the other five sources (rotation, weather, second weather, strike signals, blog) return scripted
-findings. The jurisdiction rules (`src/jurisdiction.ts`) and the price (`src/research.ts`) are deterministic code.
+What is real and what is scripted in the research: the fee, the flight schedule, the departure board and natural
+events near the route (NASA EONET) are real paid calls; the other five sources (aircraft rotation, route weather,
+airspace notices, strike signals, travel blog) return scripted findings. The jurisdiction rules (`src/jurisdiction.ts`) and the price (`src/research.ts`) are deterministic code.
 
 The quote is in euros; on-chain 1 tADA stands for €5 (research fee 2 tADA, premium €19 = 3.8 tADA, payout €250 = 50 tADA).
 

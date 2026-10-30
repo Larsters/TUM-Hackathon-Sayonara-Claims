@@ -90,7 +90,7 @@ export interface Purchase {
 
 export interface Wallets {
   eurPerTada: number;
-  ana: { address: string; display: string; eur: number };
+  traveller: { name: string; address: string; display: string; eur: number };
   pool: { address: string; display: string; eur: number };
 }
 

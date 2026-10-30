@@ -13,7 +13,7 @@ export function LiveApp() {
     { k: "Flight", v: flight?.number ?? live.draft.number ?? "—" },
     { k: "Route", v: flight ? `${flight.from.iata ?? "?"} → ${flight.to.iata ?? "?"}` : live.draft.from ? `${live.draft.from} → ${live.draft.to ?? "?"}` : "—" },
     { k: "Date", v: flight?.date ?? live.draft.date ?? "—" },
-    { k: "Passenger", v: "ANA K." },
+    { k: "Passenger", v: "VASILIY" },
   ];
   const tabs: { id: RightTab; label: string; count?: number }[] = [
     { id: "agent", label: "Agent" },
@@ -41,14 +41,9 @@ export function LiveApp() {
               </div>
             ))}
           </div>
-          <div className="ml-auto flex items-center gap-2 text-[13px] font-semibold">
-            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 ${live.offline ? "bg-bad-bg text-bad-fg" : "bg-ok-bg text-ok-deep"}`}>
-              <span className={`h-2 w-2 rounded-full ${live.offline ? "bg-bad-line" : "animate-pulse bg-ok-line"}`} />
-              {live.offline ? "Agent offline" : "Agent online"}
-            </span>
-            <span className="rounded-full bg-rule-bg px-3 py-1.5 text-rule-fg">Cardano preprod</span>
-            <span className="rounded-full bg-pay-bg px-3 py-1.5 text-pay-fg">Base Sepolia · API3</span>
-          </div>
+          {live.offline && (
+            <span className="ml-auto rounded-full bg-bad-bg px-3 py-1.5 text-[13px] font-semibold text-bad-fg">Agent server offline</span>
+          )}
         </header>
 
         <div className="grid min-h-0 flex-1 grid-cols-[55fr_45fr]">

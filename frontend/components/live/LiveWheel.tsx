@@ -103,7 +103,7 @@ export function LiveWheel({ sources, centre, running }: { sources: SourceState[]
       {sources.map((s, i) => {
         const p = position(i, sources.length);
         const sub =
-          s.status === "done" ? s.price : s.status === "rejected" ? "rejected" : s.status === "active" ? (s.id === "blog" || s.id === "weather2" ? "checking…" : "paying…") : s.vendor;
+          s.status === "done" ? s.price : s.status === "rejected" ? "rejected" : s.status === "active" ? (s.id === "blog" ? "checking…" : "paying…") : s.vendor;
         return (
           <motion.div
             key={s.id}

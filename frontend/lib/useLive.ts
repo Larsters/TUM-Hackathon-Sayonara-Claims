@@ -56,9 +56,10 @@ export interface LiveTransaction extends TripTransaction {
 const SOURCES: Omit<SourceState, "status">[] = [
   { id: "schedule", label: "Flight schedule", vendor: "AeroDataBox" },
   { id: "board", label: "Departure board", vendor: "AeroDataBox" },
+  { id: "events", label: "Natural events", vendor: "NASA EONET" },
   { id: "rotation", label: "Aircraft rotation", vendor: "OpenSky" },
   { id: "weather", label: "Route weather", vendor: "WeatherAPI.com" },
-  { id: "weather2", label: "Weather #2", vendor: "CustomWeather" },
+  { id: "airspace", label: "Airspace notices", vendor: "NOTAM feed" },
   { id: "news", label: "Strike signals", vendor: "News feed" },
   { id: "blog", label: "Travel blog", vendor: "Scraper" },
 ];
@@ -169,7 +170,7 @@ export function useLive() {
           setSources(list => list.map(s => (s.id === e.id ? { ...s, status: e.status, finding: e.finding ?? s.finding, price: e.price ?? s.price, explorer: e.explorer ?? s.explorer, live: e.live ?? s.live } : s)));
           if (e.transaction && e.explorer && e.status !== "active") {
             const source = SOURCES.find(s => s.id === e.id);
-            addTx({ kind: `${source?.vendor} ${source?.label.toLowerCase()} · x402 · 0.05 aUSD`, chain: "Base Sepolia", hash: e.transaction, explorer: e.explorer });
+            addTx({ kind: `${source?.vendor} ${source?.label.toLowerCase()} · x402 · ${e.price?.replace("x402 · ", "") ?? "aUSD"}`, chain: "Base Sepolia", hash: e.transaction, explorer: e.explorer });
           }
           break;
         }

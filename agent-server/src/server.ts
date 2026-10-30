@@ -85,8 +85,8 @@ app.post("/api/research", (req, res) => {
   res.json({ ticket: randomUUID(), request: req.body ?? {}, paidAt: new Date().toISOString() });
 });
 
-// Ana's agent pays for the research over x402, exactly as an outside agent would, and returns the transaction.
-const payResearchFee = async (body: unknown) => {
+// The traveller's agent pays for the research over x402, exactly as an outside agent would, and returns the transaction.
+const payResearchFeeOnce = async (body: unknown) => {
   const client = new x402Client().setSpendControls({
     allowedAssets: [{ network: "cardano:*", asset: "lovelace", maxAmountPerPayment: "5000000" }],
   });
@@ -99,8 +99,28 @@ const payResearchFee = async (body: unknown) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body ?? {}),
   });
-  if (!response.ok) throw new Error(`Research fee payment failed with HTTP ${response.status}`);
+  if (!response.ok) {
+    // A rejected payment comes back as a new 402 whose PAYMENT-REQUIRED header says why.
+    const header = response.headers.get("PAYMENT-REQUIRED");
+    const reason = header ? (JSON.parse(Buffer.from(header, "base64").toString("utf8")) as { error?: string }).error : undefined;
+    throw new Error(`Research fee rejected (HTTP ${response.status})${reason ? `: ${reason}` : ""}`);
+  }
   return new x402HTTPClient(client).getPaymentSettleResponse(name => response.headers.get(name))?.transaction;
+};
+
+// The x402 client spends the wallet's first UTXO. Right after another payment from the same wallet, the provider can
+// still list a UTXO that payment spent, and the facilitator rejects the fee with nonce_not_on_chain. Waiting for the
+// previous payment to confirm fixes it, so retry that one error.
+const payResearchFee = async (body: unknown) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await payResearchFeeOnce(body);
+    } catch (error) {
+      if (attempt >= 5 || !String(error).includes("nonce_not_on_chain")) throw error;
+      console.error(`Research fee attempt ${attempt}: the previous payment is still confirming, retrying in 15 s`);
+      await new Promise(resolve => setTimeout(resolve, 15_000));
+    }
+  }
 };
 
 // Server-sent events: one line per research step.
@@ -128,6 +148,7 @@ app.post("/api/chat", async (req, res) => {
     const turn = await runAgentTurn(messages, {
       ...context,
       today: new Date().toISOString().slice(0, 10),
+      traveller: "Vasiliy",
       researchFee: "€0.50, paid per request over x402 (2 tADA on Cardano preprod)",
       history: buildHistory(),
     });
@@ -137,7 +158,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// Ana pays the premium to the cover pool on Cardano, and the policy is registered in FlightDelayCover on Base.
+// The traveller pays the premium to the cover pool on Cardano, and the policy is registered in FlightDelayCover on Base.
 app.post("/demo/buy-policy", async (req, res) => {
   try {
     const { flight, date, option } = (req.body ?? {}) as { flight?: string; date?: string; option?: CoverOption };
@@ -175,7 +196,7 @@ app.get("/demo/wallets", async (_req, res) => {
     const toEur = (lovelace: bigint) => (Number(lovelace) / 1_000_000) * EUR_PER_TADA;
     res.json({
       eurPerTada: EUR_PER_TADA,
-      ana: { address: anaAddress, lovelace: ana.toString(), display: formatAda(ana), eur: toEur(ana) },
+      traveller: { name: "Vasiliy", address: anaAddress, lovelace: ana.toString(), display: formatAda(ana), eur: toEur(ana) },
       pool: { address: poolAddress, lovelace: pool.toString(), display: formatAda(pool), eur: toEur(pool) },
     });
   } catch (error) {
