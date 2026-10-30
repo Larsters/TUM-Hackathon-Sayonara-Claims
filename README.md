@@ -3,10 +3,10 @@
 TUM Blockchain & AI Hackathon, Munich, 30–31 October 2026. Submission deadline: Sat 31 Oct, 15:00.
 
 A traveller hires the EigenCover agent, gets a price for flight-disruption cover, buys a policy,
-and is paid automatically when the flight is cancelled. Nobody files a claim and no paperwork is involved.
+and is paid automatically when the flight arrives 3+ hours late. Nobody files a claim and no paperwork is involved.
 The payout trigger is signed flight data, not the AI and not a person.
 
-This is a **demo build**. The user journey is scripted and the scenario is fixed: one flight, one cancellation.
+This is a **demo build**. The user journey is scripted and the scenario is fixed: one flight (Munich → Colombo), one 3h+ delay.
 The parts the judges check are real: the Cardano payments, the API3 signature checks and the tamper test.
 
 ## Tracks we enter
@@ -19,29 +19,43 @@ The parts the judges check are real: the Cardano payments, the API3 signature ch
 
 ## Demo (about 2 minutes)
 
-| Time | What the viewer sees | What is actually running |
-|---|---|---|
-| 0:00–0:15 | The problem: a traveller's flight is cancelled, the claim takes weeks, and half the time nobody pays | slide |
-| 0:15–0:35 | The traveller hires the EigenCover agent on Sokosumi: "MUC → JFK, flight XX123, 12 Nov" | **real**: Masumi job, payment locked in escrow on Cardano preprod |
-| 0:35–0:55 | The agent buys data for its research (weather, airport delays, events) and shows what it paid for | scripted output, paid x402 calls optional |
-| 0:55–1:15 | The agent offers a policy ("€X premium, €200 payout if the flight is cancelled"). The traveller asks for a change and the agent adjusts the cover | **hardcoded** price and dialogue |
-| 1:15–1:30 | The traveller buys the policy, and the purchase transaction is shown on the Cardano preprod explorer | **real** transaction |
-| 1:30–1:50 | "The flight is cancelled." A keeper submits the signed flight status, the contract verifies it, and the payout appears in the traveller's wallet | **real** signed response and contract check (see the API3 section) |
-| 1:50–2:10 | Tamper test: an edited response, a stale one, the wrong flight and the wrong signer are all rejected | **real**, required by API3 |
-| 2:10–2:30 | Roadmap and business case: travel agents embed the cover, and EigenCover's pricing engine prices it | slide |
+The story: Ana flies Munich → Colombo. Her flight arrives 3h+ late because of an air-traffic-control strike.
+Under EU261 the airline can refuse to compensate her, because a strike counts as an "extraordinary
+circumstance". Even when EU261 does pay, it takes months. EigenCover pays her within minutes, and nobody files a claim.
 
-API3 asks for the tamper test in the video and Cardano asks for the business case, so the video can run up
-to the 2.5-minute limit.
+| Time | Scene (frontend) | What is real |
+|---|---|---|
+| 0:00–0:15 | **Problem**: "Your flight is 3 hours late. The airline says: strike, extraordinary circumstances, no compensation." | slide |
+| 0:15–0:35 | **Quote request**: Ana enters MUC → CMB, flight number and date. The agent asks two yes/no questions (checked bag? connecting flight?) | scripted dialogue |
+| 0:35–1:00 | **Research wheel**: the agent pays sources via x402 (flight history, airport delay board, CMB weather, strike and news feed). Each node shows its price and whether it is signed. Two are rejected with a reason: "CustomWeather: US/Canada only, no data for CMB" and "unsigned source" | pricing hardcoded; x402 calls real if time allows |
+| 1:00–1:15 | **Policy**: "€9 premium → €250 if you arrive ≥3h late, for any reason, including strikes and weather." Ana pays and the policy appears with its Cardano preprod transaction | **real** transaction |
+| 1:15–1:35 | **Flight tracker**: plane on the MUC → CMB arc, lands +3h12m. A keeper fetches the signed AeroDataBox status, and the contract checks tick one by one: signer ✓ · this flight and date ✓ · fresh ✓ · not paid before ✓ | **real** signed response from a past flight, real contract check |
+| 1:35–1:45 | **Payout**: Ana's wallet goes from 0 to €250, with the payout transaction. The pool widget shows €9 in and €250 out | **real** transaction |
+| 1:45–2:05 | **Tamper test**: four forged responses are submitted and the contract rejects each one | **real**, API3 qualification |
+| 2:05–2:20 | **Close**: the pricing engine sets premiums above expected payouts, so the pool earns across many policies | slide |
+
+### Liquidity pool
+
+Show one small "EigenCover pool" balance that changes (premium in, payout out). It answers "where does the
+€250 come from?" in two seconds. Leave LP tokens, yields and the capital structure for the Q&A.
+
+### Frontend
+
+A single Next.js page with a scene stepper (arrow key or "Next" button). Booth judging is live, so the
+presenter controls the pace. EigenCover brand: background `#0b0f19`, accent `#38bdf8`, Outfit + IBM Plex Mono
+for hashes. Transaction hashes link to the preprod explorers. Every network result has a cached fallback, so
+the demo runs even if the Wi-Fi or a faucet fails.
+
+Scenes: Problem → Quote chat → Research wheel → Policy card → Flight tracker + contract checks → Wallet payout →
+Tamper test → Close.
 
 ### Hardcoded vs real
 
-- **Hardcoded:** the route, the price, the agent's dialogue, the research summary and the "flight cancelled" moment.
-- **Real:** the Masumi escrow payment, the policy purchase transaction, the payout transaction, the signed
-  AirnodeHub response, the contract checks and the tamper test.
-- **The cancellation should come from a real flight.** Find a flight that was actually cancelled
-  recently and fetch its signed AeroDataBox status. That response is real data with a real signature,
-  so the API3 part stays honest even though the journey is scripted. The demo presents it as "the
-  flight is cancelled". Say in the pitch that the cancellation is a replay of a real one.
+- **Hardcoded:** route, flight, price, dialogue, research verdicts, the animation of the landing.
+- **Real:** the Cardano payment and policy transaction, the payout transaction, the signed AirnodeHub
+  response, the contract checks, the tamper test.
+- **The delay comes from a real flight.** Pick a past flight (ideally MUC → CMB or similar) that really
+  arrived 3h+ late, and fetch its signed AeroDataBox status. Say in the pitch that it is a replay of a real flight.
 
 ## What each piece does
 
@@ -62,21 +76,23 @@ hardcoded.
 API3 answers one question: **did the insured event really happen, and can a contract trust the answer?**
 
 AirnodeHub serves data from providers such as **AeroDataBox** (flight status). Every response is
-**signed** by the provider's Airnode key. When the flight is cancelled:
+**signed** by the provider's Airnode key. When the flight lands:
 
 1. A keeper (a small script or agent) asks AirnodeHub for the status of flight XX123 on that date.
-2. It receives the data ("status: Cancelled") plus a signature, a request hash and a timestamp.
+2. It receives the data (scheduled and actual arrival times) plus a signature, a request hash and a timestamp.
 3. It submits all of this to our settlement contract.
 4. The contract checks the signature against the expected Airnode signer, checks that the request
    hash matches *this* policy's flight and date, checks the timestamp for freshness, and confirms the
    policy has not been settled already.
-5. Only if every check passes does the contract mark the policy as paid and release the payout.
+5. The contract computes the delay itself (actual minus scheduled arrival) and compares it with the policy's
+   threshold (180 minutes). The trigger rule lives in the contract, not in the agent.
+6. Only if every check passes does the contract mark the policy as paid and release the payout.
 
-Without API3, someone has to say "trust me, the flight was cancelled", which brings back exactly the
+Without API3, someone has to say "trust me, the flight was late", which brings back exactly the
 claims process we are removing. With API3 the payout depends on data that cannot be edited without
 breaking the signature. The tamper test demonstrates this.
 
-The signature proves that AeroDataBox *said* the flight was cancelled. It does not prove the
+The signature proves that AeroDataBox *said* the flight was late. It does not prove the
 flight really was. That still depends on AeroDataBox being right, and API3 says so themselves.
 
 API3 track rules we have to meet:
@@ -109,7 +125,7 @@ the Cardano Foundation that Plutus V3's secp256k1 and keccak builtins make this 
 
 - Hackathon rule on prior code: can we reuse EigenCover's pricing engine? Ask the organisers.
 - Masumi: can a Sokosumi task handle the back-and-forth of step 0:55, or should the dialogue live in our own UI?
-- API3: which AeroDataBox field gives cancellation status, and how do we read it through their projections?
+- API3: which AeroDataBox field gives scheduled vs actual arrival time, and how do we read it through their projections?
 - Which EVM testnet should the settlement contract use? Base Sepolia is where the starter pays for x402 calls.
 
 ## Links
