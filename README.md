@@ -140,7 +140,7 @@ The pool is a demo wallet we control (custodial). Say so in the pitch; the roadm
 |---|---|---|
 | [`settlement/`](settlement/) | `FlightDelayCover` contract (Base Sepolia), tamper tests, flight CLI (fetch signed AeroDataBox status, deploy, create policy, settle, tamper) | 9/9 Foundry tests pass; waiting for Base Sepolia ETH to deploy |
 | [`agent-server/`](agent-server/) | x402-paid research on Cardano preprod, policy purchase, payout keeper | 402 paywall works with the hosted facilitator; waiting for test ADA |
-| frontend | Scripted demo UI (built separately, brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md)) | in progress |
+| [`frontend/`](frontend/) | Scripted demo UI (Next.js), brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md) | builds; transaction hashes in `frontend/demo/config.ts` are placeholders |
 
 ## Build order
 
