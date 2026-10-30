@@ -195,9 +195,12 @@ export function useLive() {
     try {
       await api.research({ flight: draft.number, date: draft.date, from: draft.from, to: draft.to }, onEvent);
     } catch (error) {
-      push({ id: id(), kind: "system", tone: "bad", text: `Research failed: ${String(error).slice(0, 120)}` });
-      setPhase("intake");
-      return;
+      // A connection that breaks after the quote arrived loses nothing: carry on with the quote.
+      if (!received) {
+        push({ id: id(), kind: "system", tone: "bad", text: `Research failed: ${String(error).slice(0, 120)}` });
+        setPhase("intake");
+        return;
+      }
     }
     refreshWallets();
     const finalQuote = received as Quote | null;
