@@ -2,14 +2,20 @@
 
 Built from the Cardano Foundation's [x402-express template](https://developers.cardano.org/templates/x402-express/).
 
-| Piece | What it does | Chain |
+| Route | What it does | Chain |
 |---|---|---|
-| `POST /api/research` | The agent's research and quote, paid per request over **x402** (2 tADA to the cover pool) | Cardano preprod |
-| `POST /demo/research` | Ana's agent pays `/api/research` over x402 and returns the quote and the payment transaction | Cardano preprod |
-| `POST /demo/buy-policy` | Ana pays the premium to the pool; the policy terms go into the transaction metadata (CIP-20) | Cardano preprod |
-| `GET /demo/wallets` | tADA balances of Ana and the pool | |
+| `POST /api/chat` | The conversation (OpenAI). The model talks and extracts the flight; it never sets a price, trigger or payout | |
+| `POST /api/research` | Paid per request over **x402**: 2 tADA to the cover pool buys one research run | Cardano preprod |
+| `POST /demo/research` | Streams the research as server-sent events: the x402 fee (paid by Ana's agent), the flight schedule and the live departure board bought from **AeroDataBox over x402 in aUSD**, scripted extra sources, the jurisdiction check and the deterministic price | both |
+| `POST /demo/buy-policy` | Ana pays the premium to the pool (policy terms in CIP-20 metadata) **and** the policy is registered in `FlightDelayCover` | both |
+| `GET /demo/wallets` | tADA balances of Ana and the pool | Cardano preprod |
+| `GET /demo/history` | Ana's past trips: LH 501 Rio → Frankfurt, a replay of a real flight that landed 7h 08m late and was paid out | |
 | `GET /demo/payouts` | Payouts the keeper sent | |
-| `npm run keeper` | Watches `PolicySettled` on the `FlightDelayCover` contract (Base Sepolia) and sends each `PaidOut` payout from the pool to the traveller's Cardano address, once | both |
+| `npm run keeper` | Watches `PolicySettled` on Base Sepolia and sends each `PaidOut` payout from the pool to the traveller on Cardano, once | both |
+
+What is real and what is scripted in the research: the fee, the flight schedule and the departure board are real
+paid calls; the other five sources (rotation, weather, second weather, strike signals, blog) return scripted
+findings. The jurisdiction rules (`src/jurisdiction.ts`) and the price (`src/research.ts`) are deterministic code.
 
 The quote is in euros; on-chain 1 tADA stands for €5 (research fee 2 tADA, premium €19 = 3.8 tADA, payout €250 = 50 tADA).
 

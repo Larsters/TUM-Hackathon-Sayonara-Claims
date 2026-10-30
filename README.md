@@ -134,13 +134,25 @@ through x402 **or** Masumi, and x402 is the quicker route.
 
 The pool is a demo wallet we control (custodial). Say so in the pitch; the roadmap is an on-chain validator.
 
+## Run the demo
+
+```sh
+cd agent-server && npm install && npm run server     # http://localhost:4021, needs agent-server/.env and the root .env
+cd frontend && npm install && npm run dev -- -p 3100 # http://localhost:3100 (live app), /scripted (offline backup)
+cd agent-server && npm run keeper                    # optional: pays out policies that FlightDelayCover settles
+```
+
+The live app talks to the agent server: a real chat (OpenAI), a streamed research run with real x402 payments on
+Cardano preprod and Base Sepolia, and a real policy purchase on both chains. `/scripted` is the earlier, fully
+scripted version that runs without any network.
+
 ## Code
 
 | Folder | What | Status |
 |---|---|---|
 | [`settlement/`](settlement/) | `FlightDelayCover` contract (Base Sepolia), tamper tests, flight CLI (fetch signed AeroDataBox status, deploy, create policy, settle, tamper) | Deployed; real policy settled from signed LH 501 data (428 min late); 14/14 tests pass |
 | [`agent-server/`](agent-server/) | x402-paid research on Cardano preprod, policy purchase, payout keeper | Research fee (x402), premium and keeper payout confirmed on Cardano preprod |
-| [`frontend/`](frontend/) | Scripted demo UI (Next.js), brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md) | builds; shows the four real transactions (research fee, policy, settlement, payout) |
+| [`frontend/`](frontend/) | Live app at `/` (chat, animated source wheel, My trips, Transactions, wallets); scripted backup at `/scripted` | full journey tested in Chrome against testnets |
 
 ## Build order
 

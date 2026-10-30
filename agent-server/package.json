@@ -20,6 +20,7 @@
     "@evolution-sdk/evolution": "0.5.14",
     "@x402/cardano": "2.26.0",
     "@x402/core": "2.26.0",
+    "@x402/evm": "^2.26.0",
     "@x402/express": "2.26.0",
     "@x402/fetch": "2.26.0",
     "dotenv": "^16.4.5",

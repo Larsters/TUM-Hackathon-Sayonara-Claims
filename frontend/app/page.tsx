@@ -1,5 +1,5 @@
-import { Demo } from "@/components/Demo";
+import { LiveApp } from "@/components/live/LiveApp";
 
 export default function Page() {
-  return <Demo />;
+  return <LiveApp />;
 }
