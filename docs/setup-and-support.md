@@ -39,6 +39,28 @@ Collected from the hackathon Telegram group (export of 30 Oct 2026, 15:41) and t
 Open question someone already asked in the group, still unanswered: **can `flightStatusOnDate` return flights
 that have already landed (for example yesterday's)?** We depend on this. Ask Matej at the API3 booth.
 
+## Funding the demo wallets
+
+Testnets are practice blockchains. Their coins are free and worth nothing, but every transaction still pays a fee
+in the chain's own coin, so each wallet needs a little of it.
+
+| Wallet | Chain | Needs | Used for |
+|---|---|---|---|
+| Dev wallet `0xABC2d5C2CfDcE8467925923c833283A0B768C070` | Base Sepolia | ~0.001+ ETH | Gas: mint aUSD, deploy `FlightDelayCover`, create policies, settle |
+| Cover pool `addr_test1qqmjn9gvslf6pcrhc7ncagjur4u2xuj46ataeqfkcx6hqejpp2es3m992vz0zzsjmy20sc80ehpmqhqv8pdnpa8sj34q4aperg` | Cardano preprod | ~350 tADA | Pays the 250 tADA payout; funds Ana's wallet |
+| Ana (traveller) | Cardano preprod | ~50 tADA | Research fee (2) and premium (19). Funded from the pool |
+
+Only two faucet claims are needed: ETH to the dev wallet, and tADA to the pool. The scripts move tADA from the pool to Ana.
+
+1. **Base Sepolia ETH:** https://portal.cdp.coinbase.com/products/faucet (sign in, network Base Sepolia, token
+   ETH, paste the dev wallet address). Alternatives: https://www.alchemy.com/faucets/base-sepolia, or ask the API3
+   team at their booth.
+2. **Test ADA:** https://docs.cardano.org/cardano-testnets/tools/faucet (environment Preprod Testnet, paste the pool
+   address, solve the captcha). Alternatives: the Masumi dispenser with the code from the registration email, or
+   DM Sandro (Masumi) with the pool address.
+3. aUSD (for the paid AeroDataBox calls) is minted by script from the dev wallet once it has ETH:
+   `npm run flight -- mint-ausd` in `settlement/`.
+
 ## People to ask
 
 | Topic | Who | How |
