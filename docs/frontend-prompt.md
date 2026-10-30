@@ -1,11 +1,11 @@
 # Frontend brief: flight cover agent demo
 
 Paste everything below the line into a coding or design agent (Claude Code, v0, Lovable).
-Fill in `{{PRODUCT_NAME}}` first.
+Product name: **Sayonara Claims**.
 
 ---
 
-Build a single-page demo web app for **{{PRODUCT_NAME}}**, a hackathon project. An AI agent sells parametric
+Build a single-page demo web app for **Sayonara Claims**, a hackathon project. An AI agent sells parametric
 flight-delay cover: the traveller chats with the agent, the agent pays for data sources, checks regulations,
 prices a policy and sells it. After the flight lands late, a smart contract pays the traveller automatically
 from signed flight data. Nobody files a claim.

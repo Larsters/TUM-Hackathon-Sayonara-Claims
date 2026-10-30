@@ -1,4 +1,4 @@
-# Flight cover agent (working title): cover booked by an agent, paid out by signed data
+# Sayonara Claims: flight cover booked by an agent, paid out by signed data
 
 TUM Blockchain & AI Hackathon, Munich, 30–31 October 2026. Submission deadline: Sat 31 Oct, 15:00.
 
@@ -113,19 +113,45 @@ has approved the claim. This bridge is a trusted step, and we say so in the pitc
 Roadmap: an Aiken validator on Cardano that verifies the oracle signature itself (to be confirmed with
 the Cardano Foundation that Plutus V3's secp256k1 and keccak builtins make this practical).
 
+## What we build (and what we don't)
+
+Our own frontend **is** the demo: the traveller-facing app with the chat and the agent-reasoning panel
+(brief: [`docs/frontend-prompt.md`](docs/frontend-prompt.md)). Sokosumi is a marketplace where people or agents
+hire an agent for a task and get a text result back. It cannot show our reasoning panel, the policy, the flight or
+the payout, so it cannot replace our UI. Cardano only requires that real payments go through Cardano preprod,
+through x402 **or** Masumi, and x402 is the quicker route.
+
+| # | Piece | Real or scripted | Needed for |
+|---|---|---|---|
+| 1 | Frontend: chat + agent reasoning panel, scripted, reads tx hashes from config | scripted UI, real links | the demo |
+| 2 | **Settlement contract** (Solidity, Foundry, Base Sepolia): stores the policy (flight, date, threshold), verifies the signed AeroDataBox response (signer, request hash, freshness), computes the delay, settles once, emits `Settled` | **real** | API3 (pass/fail) |
+| 3 | **Tamper test**: Foundry tests plus a script judges can run with their own responses | **real** | API3 (pass/fail) |
+| 4 | **Signed response from a real delayed flight**, fetched once and cached as a file | **real** | API3 |
+| 5 | **Research fee via x402 on Cardano preprod** (x402-next template, Blockfrost key): the traveller pays €0.50 before the agent researches | **real** | Cardano (qualifying payment) |
+| 6 | **Policy purchase**: the traveller's wallet sends the premium to the cover pool address on preprod | **real** | Cardano |
+| 7 | **Payout keeper**: a script watches the `Settled` event and sends the payout from the pool to the traveller on preprod | **real**, trusted step (said in the pitch) | Cardano + API3 story |
+| 8 | Optional: the same agent listed as a Sokosumi Coworker, one paid job through Masumi escrow | real | Cardano bonus ("agents hiring agents", escrow) |
+
+The pool is a demo wallet we control (custodial). Say so in the pitch; the roadmap is an on-chain validator.
+
 ## Build order
 
-1. API3 settlement contract and tamper tests: adapt `NodaryPriceConsumer` from the starter to flight status.
-2. Masumi Coworker: one paid job on preprod, transaction hash saved.
-3. Policy purchase and payout transactions on Cardano preprod.
-4. Scripted demo flow tying the steps together.
-5. Record the video, write the Devfolio description, make the repo public. Freeze by 13:30 on Saturday.
+1. **Now:** ask Matej (API3 booth) whether `flightStatusOnDate` returns already-landed flights with actual arrival
+   times. Then fetch and save a signed response for a real flight that arrived 3h+ late.
+2. Settlement contract + tamper tests (adapt the starter's `NodaryPriceConsumer`). Deploy to Base Sepolia.
+3. x402 research-fee payment on Cardano preprod; save the transaction hash.
+4. Policy purchase and payout keeper on preprod; save both hashes.
+5. Put all hashes into the frontend config; rehearse the scripted run.
+6. Optional: Sokosumi Coworker.
+7. Freeze by 13:30 Saturday. Record the video, write the Devfolio description, check the repo is public.
 
 ## Open questions
 
-- Masumi: can a Sokosumi task handle the back-and-forth of step 0:55, or should the dialogue live in our own UI?
-- API3: which AeroDataBox field gives scheduled vs actual arrival time, and how do we read it through their projections?
-- Which EVM testnet should the settlement contract use? Base Sepolia is where the starter pays for x402 calls.
+- API3: does `flightStatusOnDate` return landed flights with actual arrival times, and which fields hold
+  scheduled and actual arrival (read through their projections)?
+- Masumi: does a paid job through our own Masumi node, outside Sokosumi, count? (Asked by another team, no answer yet.)
+
+Test funds, accounts and who to ask: [`docs/setup-and-support.md`](docs/setup-and-support.md).
 
 ## Links
 
