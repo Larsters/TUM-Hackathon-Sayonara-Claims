@@ -1,8 +1,8 @@
-# EigenCover Agent: flight cover booked by an agent, paid out by signed data
+# Flight cover agent (working title): cover booked by an agent, paid out by signed data
 
 TUM Blockchain & AI Hackathon, Munich, 30–31 October 2026. Submission deadline: Sat 31 Oct, 15:00.
 
-A traveller hires the EigenCover agent, gets a price for flight-disruption cover, buys a policy,
+A traveller hires our agent, gets a price for flight-disruption cover, buys a policy,
 and is paid automatically when the flight arrives 3+ hours late. Nobody files a claim and no paperwork is involved.
 The payout trigger is signed flight data, not the AI and not a person.
 
@@ -21,29 +21,29 @@ The parts the judges check are real: the Cardano payments, the API3 signature ch
 
 The story: Ana flies Munich → Colombo. Her flight arrives 3h+ late because of an air-traffic-control strike.
 Under EU261 the airline can refuse to compensate her, because a strike counts as an "extraordinary
-circumstance". Even when EU261 does pay, it takes months. EigenCover pays her within minutes, and nobody files a claim.
+circumstance". Even when EU261 does pay, it takes months. Our cover pays her within minutes, and nobody files a claim.
 
 | Time | Scene (frontend) | What is real |
 |---|---|---|
 | 0:00–0:15 | **Problem**: "Your flight is 3 hours late. The airline says: strike, extraordinary circumstances, no compensation." | slide |
 | 0:15–0:35 | **Quote request**: Ana enters MUC → CMB, flight number and date. The agent asks two yes/no questions (checked bag? connecting flight?) | scripted dialogue |
 | 0:35–1:00 | **Research wheel**: the agent pays sources via x402 (flight history, airport delay board, CMB weather, strike and news feed). Each node shows its price and whether it is signed. Two are rejected with a reason: "CustomWeather: US/Canada only, no data for CMB" and "unsigned source" | pricing hardcoded; x402 calls real if time allows |
-| 1:00–1:15 | **Policy**: "€9 premium → €250 if you arrive ≥3h late, for any reason, including strikes and weather." Ana pays and the policy appears with its Cardano preprod transaction | **real** transaction |
+| 1:00–1:15 | **Policy**: "€19 premium → €250 if you arrive ≥3h late, for any reason, including strikes and weather." Ana pays and the policy appears with its Cardano preprod transaction | **real** transaction |
 | 1:15–1:35 | **Flight tracker**: plane on the MUC → CMB arc, lands +3h12m. A keeper fetches the signed AeroDataBox status, and the contract checks tick one by one: signer ✓ · this flight and date ✓ · fresh ✓ · not paid before ✓ | **real** signed response from a past flight, real contract check |
-| 1:35–1:45 | **Payout**: Ana's wallet goes from 0 to €250, with the payout transaction. The pool widget shows €9 in and €250 out | **real** transaction |
+| 1:35–1:45 | **Payout**: Ana's wallet goes from 0 to €250, with the payout transaction. The pool widget shows €19 in and €250 out | **real** transaction |
 | 1:45–2:05 | **Tamper test**: four forged responses are submitted and the contract rejects each one | **real**, API3 qualification |
 | 2:05–2:20 | **Close**: the pricing engine sets premiums above expected payouts, so the pool earns across many policies | slide |
 
 ### Liquidity pool
 
-Show one small "EigenCover pool" balance that changes (premium in, payout out). It answers "where does the
+Show one small "cover pool" balance that changes (premium in, payout out). It answers "where does the
 €250 come from?" in two seconds. Leave LP tokens, yields and the capital structure for the Q&A.
 
 ### Frontend
 
 A single Next.js page with a scene stepper (arrow key or "Next" button). Booth judging is live, so the
-presenter controls the pace. EigenCover brand: background `#0b0f19`, accent `#38bdf8`, Outfit + IBM Plex Mono
-for hashes. Transaction hashes link to the preprod explorers. Every network result has a cached fallback, so
+presenter controls the pace. Own visual identity, not EigenCover's. The full build brief is in
+[`docs/frontend-prompt.md`](docs/frontend-prompt.md). Transaction hashes link to the preprod explorers. Every network result has a cached fallback, so
 the demo runs even if the Wi-Fi or a faucet fails.
 
 Scenes: Problem → Quote chat → Research wheel → Policy card → Flight tracker + contract checks → Wallet payout →
@@ -68,8 +68,8 @@ during research.
 
 **API3 / AirnodeHub:** the claim layer. See below.
 
-**EigenCover pricing engine:** in the real product, it computes the premium. In this demo the price is
-hardcoded.
+**Pricing:** a simple, transparent model shown in the agent panel (probability × payout + margin). In this
+demo the numbers are hardcoded. This project is separate from EigenCover and does not use its pricing engine.
 
 ## The role of API3
 
@@ -123,7 +123,6 @@ the Cardano Foundation that Plutus V3's secp256k1 and keccak builtins make this 
 
 ## Open questions
 
-- Hackathon rule on prior code: can we reuse EigenCover's pricing engine? Ask the organisers.
 - Masumi: can a Sokosumi task handle the back-and-forth of step 0:55, or should the dialogue live in our own UI?
 - API3: which AeroDataBox field gives scheduled vs actual arrival time, and how do we read it through their projections?
 - Which EVM testnet should the settlement contract use? Base Sepolia is where the starter pays for x402 calls.
