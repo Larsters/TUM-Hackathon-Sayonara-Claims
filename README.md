@@ -134,6 +134,14 @@ through x402 **or** Masumi, and x402 is the quicker route.
 
 The pool is a demo wallet we control (custodial). Say so in the pitch; the roadmap is an on-chain validator.
 
+## Code
+
+| Folder | What | Status |
+|---|---|---|
+| [`settlement/`](settlement/) | `FlightDelayCover` contract (Base Sepolia), tamper tests, flight CLI (fetch signed AeroDataBox status, deploy, create policy, settle, tamper) | 9/9 Foundry tests pass; waiting for Base Sepolia ETH to deploy |
+| [`agent-server/`](agent-server/) | x402-paid research on Cardano preprod, policy purchase, payout keeper | 402 paywall works with the hosted facilitator; waiting for test ADA |
+| frontend | Scripted demo UI (built separately, brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md)) | in progress |
+
 ## Build order
 
 1. **Now:** ask Matej (API3 booth) whether `flightStatusOnDate` returns already-landed flights with actual arrival
