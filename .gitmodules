@@ -1,0 +1,9 @@
+[submodule "settlement/lib/forge-std"]
+	path = settlement/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "settlement/lib/openzeppelin-contracts"]
+	path = settlement/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "settlement/lib/solady"]
+	path = settlement/lib/solady
+	url = https://github.com/vectorized/solady
