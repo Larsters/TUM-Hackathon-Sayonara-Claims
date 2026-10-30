@@ -103,43 +103,83 @@ const payResearchFeeOnce = async (body: unknown) => {
     // A rejected payment comes back as a new 402 whose PAYMENT-REQUIRED header says why.
     const header = response.headers.get("PAYMENT-REQUIRED");
     const reason = header ? (JSON.parse(Buffer.from(header, "base64").toString("utf8")) as { error?: string }).error : undefined;
+    if (!reason) {
+      const settlement = response.headers.get("PAYMENT-RESPONSE");
+      const decoded = settlement ? Buffer.from(settlement, "base64").toString("utf8") : "(no PAYMENT-RESPONSE header)";
+      console.error(`Research fee rejected without a reason. Settlement: ${decoded} Body: ${await response.text()}`);
+    }
     throw new Error(`Research fee rejected (HTTP ${response.status})${reason ? `: ${reason}` : ""}`);
   }
   return new x402HTTPClient(client).getPaymentSettleResponse(name => response.headers.get(name))?.transaction;
 };
 
 // The x402 client spends the wallet's first UTXO. Right after another payment from the same wallet, the provider can
-// still list a UTXO that payment spent, and the facilitator rejects the fee with nonce_not_on_chain. Waiting for the
-// previous payment to confirm fixes it, so retry that one error.
+// still list a UTXO that payment spent, and the facilitator rejects the fee (nonce_not_on_chain). Waiting for the
+// previous payment to confirm fixes it, so a rejected fee is retried.
 const payResearchFee = async (body: unknown) => {
   for (let attempt = 1; ; attempt++) {
     try {
       return await payResearchFeeOnce(body);
     } catch (error) {
-      if (attempt >= 5 || !String(error).includes("nonce_not_on_chain")) throw error;
-      console.error(`Research fee attempt ${attempt}: the previous payment is still confirming, retrying in 15 s`);
+      if (attempt >= 5 || !String(error).includes("Research fee rejected")) throw error;
+      console.error(`Research fee attempt ${attempt} rejected (${String(error).slice(0, 160)}), retrying in 15 s`);
       await new Promise(resolve => setTimeout(resolve, 15_000));
     }
   }
 };
 
-// Server-sent events: one line per research step.
+// Research runs are kept in memory, so a browser whose stream breaks can fetch the rest.
+const researchRuns = new Map<string, { events: unknown[]; done: boolean }>();
+
+// Server-sent events: one line per research step, each with its index in the run.
 app.post("/demo/research", async (req, res) => {
   const { flight, date, from, to } = (req.body ?? {}) as { flight?: string; date?: string; from?: string; to?: string };
   if (!flight || !date) {
     res.status(400).json({ error: "Send flight and date" });
     return;
   }
+  const runId = randomUUID();
+  const run = { events: [] as unknown[], done: false };
+  researchRuns.set(runId, run);
+  req.socket.setKeepAlive(true);
+  req.socket.setTimeout(0);
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
-  const send = (event: unknown) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+  let open = true;
+  res.on("close", () => {
+    open = false;
+  });
+  const write = (chunk: string) => {
+    if (open) res.write(chunk);
+  };
+  // A comment line every 10 s keeps the connection busy while the fee settles.
+  const heartbeat = setInterval(() => write(": ping\n\n"), 10_000);
+  const send = (event: object) => {
+    const indexed = { ...event, index: run.events.length };
+    run.events.push(indexed);
+    write(`data: ${JSON.stringify(indexed)}\n\n`);
+  };
+  send({ type: "run", runId });
   try {
     await runResearch({ flight, date, from, to }, send, () => payResearchFee({ flight, date }));
   } catch (error) {
     send({ type: "error", message: String(error) });
   }
-  res.end();
+  run.done = true;
+  clearInterval(heartbeat);
+  if (open) res.end();
+  setTimeout(() => researchRuns.delete(runId), 30 * 60_000);
+});
+
+app.get("/demo/research/:runId", (req, res) => {
+  const run = researchRuns.get(req.params.runId);
+  if (!run) {
+    res.status(404).json({ error: "Unknown research run" });
+    return;
+  }
+  res.json(run);
 });
 
 app.post("/api/chat", async (req, res) => {

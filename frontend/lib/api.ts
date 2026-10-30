@@ -137,27 +137,57 @@ export const api = {
   wallets: () => get<Wallets>("/demo/wallets"),
   history: () => get<Trip[]>("/demo/history"),
 
-  /** Reads the server-sent research events as they arrive. */
+  /**
+   * Reads the server-sent research events as they arrive. If the stream breaks, it fetches the rest of the run from
+   * the server, which keeps every run's events, so the quote still arrives.
+   */
   async research(body: { flight: string; date: string; from?: string | null; to?: string | null }, onEvent: (event: ResearchEvent) => void) {
-    const response = await fetch(`${AGENT_URL}/demo/research`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok || !response.body) throw new Error(`Research failed with HTTP ${response.status}`);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const frames = buffer.split("\n\n");
-      buffer = frames.pop() ?? "";
-      for (const frame of frames) {
-        const line = frame.trim();
-        if (line.startsWith("data: ")) onEvent(JSON.parse(line.slice(6)) as ResearchEvent);
+    let runId: string | null = null;
+    let next = 0;
+    let finished = false;
+    const deliver = (event: ResearchEvent & { index?: number; runId?: string }) => {
+      if (event.index !== undefined) {
+        if (event.index < next) return;
+        next = event.index + 1;
       }
+      if (event.type === ("run" as string)) runId = event.runId ?? null;
+      if (event.type === "done") finished = true;
+      onEvent(event);
+    };
+    try {
+      const response = await fetch(`${AGENT_URL}/demo/research`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok || !response.body) throw new Error(`Research failed with HTTP ${response.status}`);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() ?? "";
+        for (const frame of frames) {
+          const line = frame.trim();
+          if (line.startsWith("data: ")) deliver(JSON.parse(line.slice(6)));
+        }
+      }
+    } catch (error) {
+      if (!runId) throw error;
+    }
+    // The stream ended early: catch up from the stored run until it is done.
+    for (let attempt = 0; !finished && runId && attempt < 120; attempt++) {
+      try {
+        const run = await get<{ events: (ResearchEvent & { index: number })[]; done: boolean }>(`/demo/research/${runId}`);
+        run.events.forEach(deliver);
+        if (run.done) break;
+      } catch {
+        /* the server is busy or restarting; try again */
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   },
 };
