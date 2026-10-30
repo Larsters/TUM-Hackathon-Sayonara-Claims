@@ -12,3 +12,4 @@
 sayonara-claims.zip
 .DS_Store
 node_modules/
+settlement/responses/board_*.json

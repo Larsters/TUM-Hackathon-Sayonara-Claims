@@ -25,16 +25,14 @@ export const config = {
     settlement: {
       // FlightDelayCover.settle with the signed AeroDataBox response (settlement/ npm run flight -- settle)
       network: "Base Sepolia",
-      hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      hash: "0xda8d73e8d276b9c7da9d5f23b57077a1cc93f76beb4172f229e9b718f602f4fe",
       explorer: basescan,
-      pending: true,
     },
     payout: {
       // Payout from the cover pool, sent by the keeper after PolicySettled (agent-server npm run keeper)
       network: "Cardano preprod",
-      hash: "0000000000000000000000000000000000000000000000000000000000000000",
+      hash: "3a00133e35e764edbb0ede7127a87b8d27000ba59a1587868f721a725d6ceb92",
       explorer: cardanoscan,
-      pending: true,
     },
   } satisfies Record<TxKey, { network: string; hash: string; explorer: (hash: string) => string; pending?: boolean }>,
 

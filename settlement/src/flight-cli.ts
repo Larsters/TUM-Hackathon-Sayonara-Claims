@@ -31,6 +31,7 @@ const coverAbi = parseAbi([
   'constructor(address airnode, uint256 maxResponseAge)',
   'function createPolicy(bytes32 requestHash, uint32 delayThresholdMinutes, uint256 payoutAmount, string payoutAddress) returns (uint256)',
   'function settle(uint256 policyId, uint256 timestamp, bytes data, bytes signature) returns (uint8 status, uint256 delayMinutes)',
+  'function maxResponseAge() view returns (uint256)',
   'event PolicyCreated(uint256 indexed policyId, bytes32 requestHash, uint32 delayThresholdMinutes, uint256 payoutAmount, string payoutAddress)',
   'event PolicySettled(uint256 indexed policyId, uint8 status, uint256 delayMinutes, uint256 payoutAmount, string payoutAddress)',
   'error NotInsurer()',
@@ -218,10 +219,17 @@ const commands: Record<string, (args: string[], options: Record<string, string |
     const cases: [string, Pick<SignedResponse, 'timestamp' | 'data' | 'signature'>][] = [
       ['Real response', real],
       ['Edited value', { ...real, data: real.data.replace(/"actualArrival":"[^"]*"/, '"actualArrival":"2099-01-01 00:00Z"') }],
-      ['Too old', { ...real, timestamp: String(BigInt(real.timestamp) - 86_400n) }],
+      // The real response, simulated at a time after it has expired
+      ['Too old', real],
       ['Another flight', readResponseFile(other)],
       ['Wrong signer', { ...real, signature: impostorSignature }],
     ];
+    const maxResponseAge = await client.readContract({
+      address: readCoverAddress(),
+      abi: coverAbi,
+      functionName: 'maxResponseAge',
+    });
+    const expiredAt = BigInt(real.timestamp) + maxResponseAge + 1n;
     for (const [name, response] of cases) {
       const outcome = await client
         .simulateContract({
@@ -229,6 +237,7 @@ const commands: Record<string, (args: string[], options: Record<string, string |
           abi: coverAbi,
           functionName: 'settle',
           args: settleArguments(BigInt(policyId), response),
+          ...(name === 'Too old' ? { blockOverrides: { time: expiredAt } } : {}),
         })
         .then(
           ({ result: [status, delayMinutes] }) => `accepted: ${STATUS_NAMES[status]}, ${delayMinutes} min late`,

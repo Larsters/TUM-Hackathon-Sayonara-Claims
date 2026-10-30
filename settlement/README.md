@@ -19,6 +19,32 @@ timestamp libraries are copied unchanged into `contracts/`.
 4. It computes the delay itself and marks the policy `PaidOut` (delay ≥ threshold) or `Expired`, emitting
    `PolicySettled`. A keeper watches this event and sends the payout on Cardano preprod.
 
+## Deployed (Base Sepolia)
+
+| What | Link |
+|---|---|
+| `FlightDelayCover` | [`0xade3e17961a471a522fcd935241c459a924e2e27`](https://sepolia.basescan.org/address/0xade3e17961a471a522fcd935241c459a924e2e27) |
+| Policy 1 created (LH 501, 29 Oct, ≥180 min, 50 tADA) | [tx](https://sepolia.basescan.org/tx/0x254d0c8fcff1093abbe1befef210cf0a7c52bdcedb2f6105dc06d3bbef4a628b) |
+| Signed status paid over x402 (0.05 aUSD) | [tx](https://sepolia.basescan.org/tx/0x9a6ec2b5add4f5001c0e52122a148fda981c13d504e95e82d3f80ff1b5d67bf5) |
+| Policy 1 settled: PaidOut, 428 min late | [tx](https://sepolia.basescan.org/tx/0xda8d73e8d276b9c7da9d5f23b57077a1cc93f76beb4172f229e9b718f602f4fe) |
+| Payout by the keeper on Cardano preprod, 50 tADA | [tx](https://preprod.cardanoscan.io/transaction/3a00133e35e764edbb0ede7127a87b8d27000ba59a1587868f721a725d6ceb92) |
+
+LH 501 (Rio de Janeiro → Frankfurt) was scheduled to arrive at 05:55Z on 30 Oct and arrived at 13:03Z. The signed
+responses are in `responses/` and `test/fixtures/`.
+
+Tamper test against the deployed contract (policy 2, still active), with the real responses:
+
+```
+Real response    accepted: PaidOut, 428 min late
+Edited value     rejected: NotSignedByAirnode(0xeAa9…4760)
+Too old          rejected: ResponseTooOld(1793376434)
+Another flight   rejected: NotSignedByAirnode(0x253E…1737)
+Wrong signer     rejected: NotSignedByAirnode(0x21c4…316e)
+```
+
+A response is accepted for 2 hours after the Airnode signed it, so for a live run fetch a fresh one first
+(`npm run flight -- fetch LH501 2026-10-29`) and create a new policy.
+
 ## Setup
 
 Needs [Foundry](https://getfoundry.sh) and Node.js 22.17 or later.
@@ -59,4 +85,5 @@ airport.
 1. Take a saved response from `responses/` and edit any value, or change the timestamp.
 2. `npm run flight -- settle <policy id> <edited.json>`: the contract reverts with `NotSignedByAirnode` or
    `ResponseTooOld`.
-3. `forge test --match-test Tamper -vv` runs the same four cases against a local contract.
+3. `forge test --match-test Tamper -vv` runs the four cases against a local contract, both with made-up responses and
+   with the real signed LH 501 and LH 901 responses.

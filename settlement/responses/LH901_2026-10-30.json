@@ -1,0 +1,7 @@
+{
+  "airnode": "0x83FE2E8F24E66520B1902C3507De4F471248f2Ec",
+  "requestHash": "0x9ff6f5c348f9b2e9c889e28d55e19b23bacb912622231a62a407747969cd55e4",
+  "timestamp": "1793376443",
+  "data": "{\"actualArrival\":\"2026-10-30 13:44Z\",\"scheduledArrival\":\"2026-10-30 11:05Z\",\"status\":\"Arrived\"}",
+  "signature": "0x0649f679080a2031685de938591455d64336147b2dc7f97f7c04ac4e9040ad3c3ef820698c1c0dd125cd11f74890f4e2a348fb4c0e1f6f9e9274047d5e24fd661c"
+}

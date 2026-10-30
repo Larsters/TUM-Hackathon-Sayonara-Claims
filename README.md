@@ -138,9 +138,9 @@ The pool is a demo wallet we control (custodial). Say so in the pitch; the roadm
 
 | Folder | What | Status |
 |---|---|---|
-| [`settlement/`](settlement/) | `FlightDelayCover` contract (Base Sepolia), tamper tests, flight CLI (fetch signed AeroDataBox status, deploy, create policy, settle, tamper) | 9/9 Foundry tests pass; waiting for Base Sepolia ETH to deploy |
-| [`agent-server/`](agent-server/) | x402-paid research on Cardano preprod, policy purchase, payout keeper | 402 paywall works with the hosted facilitator; waiting for test ADA |
-| [`frontend/`](frontend/) | Scripted demo UI (Next.js), brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md) | builds; transaction hashes in `frontend/demo/config.ts` are placeholders |
+| [`settlement/`](settlement/) | `FlightDelayCover` contract (Base Sepolia), tamper tests, flight CLI (fetch signed AeroDataBox status, deploy, create policy, settle, tamper) | Deployed; real policy settled from signed LH 501 data (428 min late); 14/14 tests pass |
+| [`agent-server/`](agent-server/) | x402-paid research on Cardano preprod, policy purchase, payout keeper | Research fee (x402), premium and keeper payout confirmed on Cardano preprod |
+| [`frontend/`](frontend/) | Scripted demo UI (Next.js), brief in [`docs/frontend-prompt.md`](docs/frontend-prompt.md) | builds; shows the four real transactions (research fee, policy, settlement, payout) |
 
 ## Build order
 

@@ -26,6 +26,8 @@ if (!coverAddress || !isAddress(coverAddress) || !poolMnemonic) {
 }
 const fromBlock = BigInt(process.env.COVER_FROM_BLOCK ?? 0);
 const POLL_MS = 10_000;
+// The public Base Sepolia RPC answers eth_getLogs for at most 200 blocks at a time.
+const LOG_RANGE = 199n;
 const KEEPER_LOG = "keeper-log.json";
 const PAID_OUT = 2;
 
@@ -56,9 +58,21 @@ const readLog = (): Payout[] => {
   }
 };
 
+let nextBlock = fromBlock;
+
+const readNewSettlements = async () => {
+  const latest = await client.getBlockNumber();
+  const logs = [];
+  while (nextBlock <= latest) {
+    const toBlock = nextBlock + LOG_RANGE < latest ? nextBlock + LOG_RANGE : latest;
+    logs.push(...(await client.getLogs({ address: coverAddress, event: policySettled, fromBlock: nextBlock, toBlock })));
+    nextBlock = toBlock + 1n;
+  }
+  return logs;
+};
+
 const payNewSettlements = async () => {
-  const logs = await client.getLogs({ address: coverAddress, event: policySettled, fromBlock, toBlock: "latest" });
-  for (const { args, transactionHash } of logs) {
+  for (const { args, transactionHash } of await readNewSettlements()) {
     const { policyId, status, delayMinutes, payoutAmount, payoutAddress } = args;
     if (status !== PAID_OUT || policyId === undefined || !payoutAddress || !payoutAmount) continue;
     const payouts = readLog();
