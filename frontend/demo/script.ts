@@ -75,6 +75,7 @@ export const script: DemoScript = {
             text: "Flight research for XX 123",
             price: x402("€0.50"),
             buttons: [{ id: "pay", label: "Pay €0.50", pressedLabel: "Paid ✓", primary: true }],
+            tx: "research",
           },
         },
       ],

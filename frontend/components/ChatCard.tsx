@@ -64,6 +64,7 @@ export function ChatCard({ card, pressed, wallet, onAdvance }: Props) {
             <PriceChip>{formatPrice(card.price)}</PriceChip>
           </div>
           <Buttons buttons={card.buttons} pressed={pressed} onAdvance={onAdvance} />
+          {pressed && card.tx && <TxHash tx={card.tx} />}
         </div>
       );
 

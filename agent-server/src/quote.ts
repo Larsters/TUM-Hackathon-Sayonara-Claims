@@ -3,9 +3,13 @@
  * is fixed; what is real is that the research is paid for over x402 on
  * Cardano preprod before it is returned.
  *
- * Amounts are in tADA, and 1 tADA stands for €1 in the demo.
+ * The quote is in euros. On Cardano preprod 1 tADA stands for €5, so the
+ * €250 payout is 50 tADA and the €19 premium is 3.8 tADA. The research fee is
+ * a flat 2 tADA, about the smallest payment Cardano allows.
  */
 export const RESEARCH_FEE_LOVELACE = 2_000_000n;
+export const EUR_PER_TADA = 5;
+export const eurToLovelace = (eur: number) => BigInt(Math.round((eur / EUR_PER_TADA) * 1_000_000));
 
 export const buildQuote = (flight: string, date: string) => {
   const probability = 0.041 + 0.008 + 0.013;
@@ -42,6 +46,12 @@ export const buildQuote = (flight: string, date: string) => {
       premium,
       premiumExceedsExpectedPayout: premium > expectedPayout,
     },
-    policy: { delayThresholdMinutes: 180, payout, premium, currency: "tADA (demo stand-in for EUR)" },
+    policy: {
+      delayThresholdMinutes: 180,
+      payoutEur: payout,
+      premiumEur: premium,
+      payoutLovelace: eurToLovelace(payout).toString(),
+      premiumLovelace: eurToLovelace(premium).toString(),
+    },
   };
 };

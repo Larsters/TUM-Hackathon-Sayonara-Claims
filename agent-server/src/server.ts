@@ -16,7 +16,7 @@ import { ExactCardanoScheme as ExactCardanoServerScheme } from "@x402/cardano/ex
 import { ExactCardanoScheme as ExactCardanoClientScheme } from "@x402/cardano/exact/client";
 import { wrapFetchWithPayment, x402Client, x402HTTPClient } from "@x402/fetch";
 import { balance, EXPLORER, formatAda, NETWORK, pay, providerConfig } from "./cardano.js";
-import { buildQuote, RESEARCH_FEE_LOVELACE } from "./quote.js";
+import { buildQuote, eurToLovelace, RESEARCH_FEE_LOVELACE } from "./quote.js";
 
 config();
 
@@ -111,8 +111,8 @@ app.post("/demo/buy-policy", async (req, res) => {
     const transaction = await pay({
       mnemonic: anaMnemonic,
       to: poolAddress,
-      lovelace: BigInt(Math.round(Number(premium) * 1_000_000)),
-      message: ["Sayonara Claims policy", `${flight} ${date}`, `pays ${payout} if >= ${thresholdMinutes} min late`],
+      lovelace: eurToLovelace(Number(premium)),
+      message: ["Sayonara Claims policy", `${flight} ${date}`, `pays EUR ${payout} if >= ${thresholdMinutes} min late`],
     });
     res.json({ transaction, explorer: `${EXPLORER}/${transaction}` });
   } catch (error) {

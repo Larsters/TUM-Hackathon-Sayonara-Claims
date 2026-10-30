@@ -11,7 +11,7 @@ Built from the Cardano Foundation's [x402-express template](https://developers.c
 | `GET /demo/payouts` | Payouts the keeper sent | |
 | `npm run keeper` | Watches `PolicySettled` on the `FlightDelayCover` contract (Base Sepolia) and sends each `PaidOut` payout from the pool to the traveller's Cardano address, once | both |
 
-Amounts are in tADA; 1 tADA stands for €1 in the demo (research fee 2 tADA, premium 19, payout 250).
+The quote is in euros; on-chain 1 tADA stands for €5 (research fee 2 tADA, premium €19 = 3.8 tADA, payout €250 = 50 tADA).
 
 ## Run
 
@@ -25,7 +25,7 @@ npm run keeper          # needs COVER_ADDRESS
 
 Test ADA: the [Cardano faucet](https://docs.cardano.org/cardano-testnets/tools/faucet) (choose Preprod) or the
 [Masumi dispenser](https://dispenser.masumi.network/) (needs the verification code from the Masumi registration email).
-The pool needs about 260 tADA to pay a 250 tADA payout; Ana needs about 30.
+The pool needs about 60 tADA to pay one 50 tADA payout; `npm run fund-ana` moves 20 tADA from the pool to Ana.
 
 The scripts use Koios and need no API key. Set `BLOCKFROST_PROJECT_ID` to use Blockfrost instead.
 

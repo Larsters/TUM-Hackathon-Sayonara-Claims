@@ -13,7 +13,8 @@
     "keeper": "tsx src/keeper.ts",
     "balances": "tsx src/balances.ts",
     "facilitator": "tsx src/facilitator.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fund-ana": "tsx src/fund-ana.ts"
   },
   "dependencies": {
     "@evolution-sdk/evolution": "0.5.14",

@@ -7,7 +7,7 @@ import type { CalcLine, DemoState } from "@/lib/engine";
 import { PlaneIcon } from "./Icons";
 import { LogList, LogRow } from "./LogList";
 import { SourceWheel } from "./SourceWheel";
-import { Spinner, rise } from "./ui";
+import { Spinner, TxHash, rise } from "./ui";
 
 function PanelHead({ panel }: { panel: PanelId }) {
   const p = script.panels[panel];
@@ -170,6 +170,11 @@ export function SettlementPanel({ state }: { state: DemoState }) {
       {s.banner && (
         <motion.div {...rise} className="rounded-xl bg-accent px-4 py-3.5 text-xl font-bold text-ink">
           {s.banner}
+        </motion.div>
+      )}
+      {s.banner && (
+        <motion.div {...rise}>
+          <TxHash tx="settlement" />
         </motion.div>
       )}
       <div className="flex-1" />

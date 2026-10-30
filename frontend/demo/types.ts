@@ -11,7 +11,7 @@ export interface Price {
 
 export type PanelId = "quote" | "flight" | "settlement" | "tamper";
 export type LogKind = "data" | "rule" | "payment" | "chain" | "oracle";
-export type TxKey = "policy" | "payout";
+export type TxKey = "research" | "policy" | "settlement" | "payout";
 
 /** A paid (or rejected) data source on the source wheel. */
 export interface Source {
@@ -40,6 +40,8 @@ export type Card =
       text: string;
       price: Price;
       buttons: CardButton[];
+      /** Shown once the card's button is pressed. */
+      tx?: TxKey;
     }
   | { id: string; variant: "choice"; eyebrow?: string; text: string; buttons: CardButton[] }
   | {
