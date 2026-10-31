@@ -232,17 +232,26 @@ app.post("/demo/buy-policy", async (req, res) => {
   }
 });
 
+// Balances are cached for 30 s, and the last good answer is served when the provider is rate-limiting us.
+let walletCache: { at: number; body: Record<string, unknown> } | null = null;
 app.get("/demo/wallets", async (_req, res) => {
+  if (walletCache && Date.now() - walletCache.at < 30_000) {
+    res.json(walletCache.body);
+    return;
+  }
   try {
     const [ana, pool] = await Promise.all([balance(anaAddress), balance(poolAddress)]);
     const toEur = (lovelace: bigint) => (Number(lovelace) / 1_000_000) * EUR_PER_TADA;
-    res.json({
+    const body = {
       eurPerTada: EUR_PER_TADA,
       traveller: { name: "Vasiliy", address: anaAddress, lovelace: ana.toString(), display: formatAda(ana), eur: toEur(ana) },
       pool: { address: poolAddress, lovelace: pool.toString(), display: formatAda(pool), eur: toEur(pool) },
-    });
+    };
+    walletCache = { at: Date.now(), body };
+    res.json(body);
   } catch (error) {
-    res.status(502).json({ error: String(error) });
+    if (walletCache) res.json({ ...walletCache.body, stale: true });
+    else res.status(502).json({ error: String(error) });
   }
 });
 

@@ -46,7 +46,7 @@ export interface FlightFacts {
 }
 
 export interface CoverOption {
-  id: "standard" | "lower";
+  id: "standard";
   thresholdMinutes: number;
   payoutEur: number;
   premiumEur: number;
@@ -214,11 +214,6 @@ export const runResearch = async (
     id: "standard", thresholdMinutes: 180, payoutEur: 250, premiumEur: premiumFor(probability, 250),
     payoutLovelace: eurToLovelace(250).toString(), premiumLovelace: eurToLovelace(premiumFor(probability, 250)).toString(),
   };
-  // A 2h threshold is hit about 1.35 times as often
-  const lower: CoverOption = {
-    id: "lower", thresholdMinutes: 120, payoutEur: 150, premiumEur: premiumFor(probability * 1.35, 150),
-    payoutLovelace: eurToLovelace(150).toString(), premiumLovelace: eurToLovelace(premiumFor(probability * 1.35, 150)).toString(),
-  };
   const pct = (p: number) => `${(p * 100).toFixed(1)}%`;
   const expected = probability * standard.payoutEur;
   await wait(400);
@@ -238,8 +233,8 @@ export const runResearch = async (
     verdict: "premium > expected payout ✓",
   });
 
-  const feePaid = await fee;
-  send({ type: "quote", quote: { flight: facts, probability, options: [standard, lower], jurisdiction } });
-  if (!feePaid) send({ type: "error", message: "The research fee is not confirmed on Cardano yet. Your quote is ready." });
+  // The quote goes out as soon as it is priced; the fee keeps settling and reports on its own.
+  send({ type: "quote", quote: { flight: facts, probability, options: [standard], jurisdiction } });
+  await fee;
   send({ type: "done" });
 };

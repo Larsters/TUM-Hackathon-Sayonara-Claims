@@ -28,7 +28,6 @@ export type RightTab = "agent" | "trips" | "transactions";
 export type LiveCard =
   | { kind: "fee"; flight: string; date: string }
   | { kind: "policy"; option: CoverOption; flight: FlightFacts }
-  | { kind: "options"; options: CoverOption[] }
   | { kind: "receipt"; option: CoverOption; flight: FlightFacts; purchase: Purchase };
 
 export type LiveMessage =
@@ -111,7 +110,7 @@ export function useLive() {
       () => setOffline(true),
     );
     refreshWallets();
-    const timer = setInterval(refreshWallets, 15_000);
+    const timer = setInterval(refreshWallets, 45_000);
     return () => clearInterval(timer);
   }, [refreshWallets]);
 
@@ -145,6 +144,15 @@ export function useLive() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [push]);
+
+  const presentQuote = useCallback(async (quote: Quote) => {
+    setPhase("quoted");
+    state.current.phase = "quoted";
+    state.current.quote = quote;
+    await agentTurn({ event: "quote_ready" });
+    const standard = quote.options.find(o => o.id === "standard");
+    if (standard) push({ id: id(), kind: "card", card: { kind: "policy", option: standard, flight: quote.flight } });
+  }, [agentTurn, push]);
 
   const startResearch = useCallback(async () => {
     const { draft } = state.current;
@@ -186,6 +194,8 @@ export function useLive() {
         case "quote":
           received = e.quote;
           setQuote(e.quote);
+          // Offer the cover right away; the research fee keeps settling in the background.
+          void presentQuote(e.quote);
           break;
         case "error":
           push({ id: id(), kind: "system", tone: "bad", text: e.message });
@@ -203,25 +213,14 @@ export function useLive() {
       }
     }
     refreshWallets();
-    const finalQuote = received as Quote | null;
-    if (!finalQuote) {
-      setPhase("intake");
-      return;
-    }
-    setPhase("quoted");
-    state.current.phase = "quoted";
-    state.current.quote = finalQuote;
-    await agentTurn({ event: "quote_ready" });
-    const standard = finalQuote.options.find(o => o.id === "standard");
-    if (standard) push({ id: id(), kind: "card", card: { kind: "policy", option: standard, flight: finalQuote.flight } });
-  }, [addTx, agentTurn, markCard, push, refreshWallets]);
+    if (!received) setPhase("intake");
+  }, [addTx, markCard, presentQuote, push, refreshWallets]);
 
   const buy = useCallback(async (option: CoverOption) => {
     const { quote } = state.current;
     if (!quote || state.current.phase !== "quoted") return;
     setPhase("buying");
     markCard("policy", "Buying…");
-    markCard("options", option.id === "lower" ? "2h option chosen" : "3h option chosen");
     setMessages(list => [...list, { id: id(), kind: "typing" }]);
     try {
       const purchase = await api.buyPolicy(quote.flight.number, quote.flight.date, option);
@@ -241,13 +240,6 @@ export function useLive() {
       setPhase("quoted");
     }
   }, [addTx, agentTurn, markCard, push, refreshWallets]);
-
-  const showOptions = useCallback(() => {
-    const { quote } = state.current;
-    if (!quote) return;
-    markCard("policy", "Customising");
-    push({ id: id(), kind: "card", card: { kind: "options", options: quote.options } });
-  }, [markCard, push]);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -272,12 +264,11 @@ export function useLive() {
         }
       } else if (phase === "quoted") {
         const quote = state.current.quote;
-        if (turn.action === "show_options") showOptions();
         if (turn.action === "confirm_purchase" && quote) void buy(quote.options[0]);
       }
     }
     setBusy(false);
-  }, [agentTurn, busy, buy, push, showOptions]);
+  }, [agentTurn, busy, buy, push]);
 
   const activeTrips: Trip[] =
     policy && quote
@@ -304,7 +295,7 @@ export function useLive() {
   return {
     messages, phase, tab, setTab, draft, facts, sources, fee, rules, pricing, quote, policy,
     transactions: allTransactions, trips: [...activeTrips, ...history], wallets, busy, offline,
-    send, startResearch, buy, showOptions,
+    send, startResearch, buy,
   };
 }
 

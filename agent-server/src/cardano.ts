@@ -63,8 +63,16 @@ export const pay = async (params: Parameters<typeof payOnce>[0]) => {
   }
 };
 
-/** Lovelace held by `address`, read from Koios. */
+/** Lovelace held by `address`, read from Blockfrost when configured, otherwise from Koios. */
 export const balance = async (address: string) => {
+  const projectId = process.env.BLOCKFROST_PROJECT_ID;
+  if (projectId) {
+    const response = await fetch(`${BLOCKFROST_BASE_URL}/addresses/${address}`, { headers: { project_id: projectId } });
+    if (response.status === 404) return 0n;
+    if (!response.ok) throw new Error(`Blockfrost addresses failed: ${response.status}`);
+    const { amount } = (await response.json()) as { amount: { unit: string; quantity: string }[] };
+    return BigInt(amount.find(a => a.unit === "lovelace")?.quantity ?? 0);
+  }
   const response = await fetch(`${KOIOS_BASE_URL}/address_info`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

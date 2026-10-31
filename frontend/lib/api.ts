@@ -52,7 +52,7 @@ export interface JurisdictionCheck {
 }
 
 export interface CoverOption {
-  id: "standard" | "lower";
+  id: "standard";
   thresholdMinutes: number;
   payoutEur: number;
   premiumEur: number;

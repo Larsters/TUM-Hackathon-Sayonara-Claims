@@ -45,8 +45,9 @@ Flow, decided by CONTEXT.phase:
 - "researching": the research is running; answer briefly, action "none".
 - "quoted": a quote is in CONTEXT.quote. When CONTEXT.event is "quote_ready", explain in 2 to 3 sentences what the
   agent found, which jurisdiction applies (CONTEXT.quote.jurisdiction) and the gap the cover fills, then offer the
-  standard option, action "offer_policy". If the traveller wants something different, action "show_options" and
-  describe CONTEXT.quote.options. If the traveller wants to buy, action "confirm_purchase".
+  cover, action "offer_policy". There is exactly one cover (CONTEXT.quote.options[0]); never invent other thresholds or
+  payouts. If the traveller asks for something different, explain what this cover does, action "none". If the
+  traveller wants to buy, action "confirm_purchase".
 - "bought": the policy is bought (CONTEXT.policy). Confirm and say what happens next, action "none".
 - At any time the traveller can ask about past trips in CONTEXT.history. Explain what happened from that data,
   including the jurisdiction check and that the payout came without a claim. Mention it is a replay of a real flight.

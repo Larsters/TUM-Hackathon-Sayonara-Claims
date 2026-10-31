@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import type { CoverOption } from "@/lib/api";
 import type { Live, LiveCard } from "@/lib/useLive";
 import { ArrowIcon } from "../Icons";
 import { Eyebrow, PriceChip, rise } from "../ui";
@@ -85,9 +84,8 @@ function CardView({ card, done, live }: { card: LiveCard; done?: string; live: L
             {done ? (
               <Done label={done} />
             ) : (
-              <div className="flex gap-2.5">
+              <div>
                 <Button primary onClick={() => live.buy(card.option)}>Buy</Button>
-                <Button onClick={live.showOptions}>Customise</Button>
               </div>
             )}
           </div>
@@ -107,24 +105,6 @@ function CardView({ card, done, live }: { card: LiveCard; done?: string; live: L
               </div>
             ))}
           </div>
-        </div>
-      );
-
-    case "options":
-      return (
-        <div className={`${shell} flex flex-col gap-3 px-[22px] py-[18px]`}>
-          <Eyebrow>Choose your cover</Eyebrow>
-          {done ? (
-            <Done label={done} />
-          ) : (
-            <div className="flex flex-wrap gap-2.5">
-              {card.options.map((o: CoverOption) => (
-                <Button key={o.id} primary={o.id === "standard"} onClick={() => live.buy(o)}>
-                  {hours(o.thresholdMinutes)}+ late → €{o.payoutEur} for €{o.premiumEur}
-                </Button>
-              ))}
-            </div>
-          )}
         </div>
       );
 
