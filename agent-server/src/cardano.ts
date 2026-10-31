@@ -49,16 +49,17 @@ const payOnce = async ({ mnemonic, to, lovelace, message }: {
  * Sends `lovelace` from the wallet of `mnemonic` to `to`, with `message` as
  * CIP-20 metadata (label 674), and returns the transaction hash. Right after
  * another payment from the same wallet the provider can still list spent
- * UTXOs and the submission fails, so it retries a few times.
+ * UTXOs, or the previous payment is still unconfirmed, and the submission
+ * fails, so it retries for up to about two minutes.
  */
 export const pay = async (params: Parameters<typeof payOnce>[0]) => {
   for (let attempt = 1; ; attempt++) {
     try {
       return await payOnce(params);
     } catch (error) {
-      if (attempt >= 4) throw error;
-      console.error(`Payment attempt ${attempt} failed, retrying in 10 s: ${String(error).slice(0, 200)}`);
-      await new Promise(resolve => setTimeout(resolve, 10_000));
+      if (attempt >= 10) throw error;
+      console.error(`Payment attempt ${attempt} failed, retrying in 12 s: ${String(error).slice(0, 200)}`);
+      await new Promise(resolve => setTimeout(resolve, 12_000));
     }
   }
 };
