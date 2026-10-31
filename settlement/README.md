@@ -82,6 +82,8 @@ airport.
 
 ## Tamper test for judges
 
+0. Easiest: in the app (http://localhost:3100), open the **Tamper test** tab. It runs the five cases against the deployed
+   contract and lets you paste or edit your own response and send it.
 1. Take a saved response from `responses/` and edit any value, or change the timestamp.
 2. `npm run flight -- settle <policy id> <edited.json>`: the contract reverts with `NotSignedByAirnode` or
    `ResponseTooOld`.

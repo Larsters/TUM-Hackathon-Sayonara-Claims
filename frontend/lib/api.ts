@@ -130,7 +130,41 @@ const get = async <T>(path: string): Promise<T> => {
   return (await response.json()) as T;
 };
 
+export interface SignedResponse {
+  timestamp: string;
+  data: string;
+  signature: string;
+}
+
+export interface TamperCase {
+  id: string;
+  name: string;
+  what: string;
+  expected: "accepted" | "rejected";
+  outcome: "accepted" | "rejected";
+  detail: string;
+  passed: boolean;
+  checkedAt: string;
+  response: SignedResponse;
+}
+
+export interface TamperRun {
+  policyId: string;
+  contract: string;
+  maxResponseAgeSeconds: number;
+  cases: TamperCase[];
+}
+
+export interface TamperCheck {
+  outcome: "accepted" | "rejected";
+  detail: string;
+  checkedAt: string;
+  policyId: string;
+}
+
 export const api = {
+  tamper: () => get<TamperRun>("/demo/tamper"),
+  checkResponse: (response: string, now: boolean) => post<TamperCheck>("/demo/tamper/check", { response, now }),
   chat: (messages: { role: "user" | "assistant"; content: string }[], context: Record<string, unknown>) =>
     post<AgentTurn>("/api/chat", { messages, context }),
   buyPolicy: (flight: string, date: string, option: CoverOption) => post<Purchase>("/demo/buy-policy", { flight, date, option }),

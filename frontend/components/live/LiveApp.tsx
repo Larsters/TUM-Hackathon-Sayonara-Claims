@@ -5,6 +5,7 @@ import { useLive, type RightTab } from "@/lib/useLive";
 import { Stage } from "../chrome";
 import { LiveChat } from "./LiveChat";
 import { AgentPanel, TransactionsPanel, TripsPanel, WalletStrip } from "./LivePanels";
+import { TamperPanel } from "./TamperPanel";
 
 export function LiveApp() {
   const live = useLive();
@@ -19,6 +20,7 @@ export function LiveApp() {
     { id: "agent", label: "Agent" },
     { id: "trips", label: "My trips", count: live.trips.length },
     { id: "transactions", label: "Transactions", count: live.transactions.length },
+    { id: "tamper", label: "Tamper test" },
   ];
 
   return (
@@ -48,7 +50,7 @@ export function LiveApp() {
 
         <div className="grid min-h-0 flex-1 grid-cols-[55fr_45fr]">
           <LiveChat live={live} />
-          <aside aria-label="Agent, trips and transactions" className="mb-6 mr-6 flex min-h-0 flex-col gap-3 rounded-[22px] bg-white px-[26px] py-[18px] shadow-hair">
+          <aside aria-label="Agent, trips, transactions and tamper test" className="mb-6 mr-6 flex min-h-0 flex-col gap-3 rounded-[22px] bg-white px-[26px] py-[18px] shadow-hair">
             <nav className="flex shrink-0 gap-1 rounded-xl bg-soft p-1">
               {tabs.map(t => (
                 <button
@@ -77,6 +79,7 @@ export function LiveApp() {
                 {live.tab === "agent" && <AgentPanel live={live} />}
                 {live.tab === "trips" && <TripsPanel live={live} />}
                 {live.tab === "transactions" && <TransactionsPanel live={live} />}
+                {live.tab === "tamper" && <TamperPanel />}
               </motion.div>
             </AnimatePresence>
             <WalletStrip live={live} />

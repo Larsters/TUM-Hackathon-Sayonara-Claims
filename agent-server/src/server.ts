@@ -22,6 +22,7 @@ import { wrapFetchWithPayment, x402Client, x402HTTPClient } from "@x402/fetch";
 import { balance, EXPLORER, formatAda, NETWORK, pay, providerConfig } from "./cardano.js";
 import { BASESCAN, registerPolicy } from "./evm.js";
 import { buildHistory } from "./history.js";
+import { checkSubmittedResponse, parseResponse, runTamperTest } from "./tamper.js";
 import { runAgentTurn, type ChatMessage } from "./llm.js";
 import { EUR_PER_TADA, RESEARCH_FEE_LOVELACE } from "./quote.js";
 import { runResearch, type CoverOption } from "./research.js";
@@ -265,6 +266,26 @@ app.get("/demo/payouts", (_req, res) => {
     res.json(JSON.parse(readFileSync(KEEPER_LOG, "utf8")));
   } catch {
     res.json([]);
+  }
+});
+
+// API3 tamper test against the deployed FlightDelayCover (simulated calls, no gas).
+app.get("/demo/tamper", async (_req, res) => {
+  try {
+    res.json(await runTamperTest());
+  } catch (error) {
+    res.status(502).json({ error: String(error) });
+  }
+});
+
+// A judge's own signed response, checked by the deployed contract.
+app.post("/demo/tamper/check", async (req, res) => {
+  try {
+    const { response, policyId, now } = req.body ?? {};
+    const parsed = parseResponse(typeof response === "string" ? JSON.parse(response) : response);
+    res.json(await checkSubmittedResponse(parsed, typeof policyId === "string" && /^\d+$/.test(policyId) ? policyId : undefined, Boolean(now)));
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 

@@ -23,7 +23,7 @@ import {
  */
 
 export type Phase = "intake" | "researching" | "quoted" | "buying" | "bought";
-export type RightTab = "agent" | "trips" | "transactions";
+export type RightTab = "agent" | "trips" | "transactions" | "tamper";
 
 export type LiveCard =
   | { kind: "fee"; flight: string; date: string }
