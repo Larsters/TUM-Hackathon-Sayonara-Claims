@@ -121,7 +121,9 @@ const payResearchFee = async (body: unknown) => {
     try {
       return await payResearchFeeOnce(body);
     } catch (error) {
-      if (attempt >= 5 || !String(error).includes("Research fee rejected")) throw error;
+      // Rejections, facilitator timeouts (504) and provider hiccups (Koios) are all worth another try.
+      const retryable = /Research fee rejected|Koios|Failed to create payment payload|fetch failed/.test(String(error));
+      if (attempt >= 5 || !retryable) throw error;
       console.error(`Research fee attempt ${attempt} rejected (${String(error).slice(0, 160)}), retrying in 15 s`);
       await new Promise(resolve => setTimeout(resolve, 15_000));
     }

@@ -76,6 +76,12 @@ function CardView({ card, done, live }: { card: LiveCard; done?: string; live: L
             <p className="text-lg leading-snug text-ink-2">
               if you arrive {hours(card.option.thresholdMinutes)}+ late, for any reason. Paid automatically, no claim to file.
             </p>
+            {live.quote?.jurisdiction.airlineOwesEur && (
+              <p className="rounded-lg bg-rule-bg px-3 py-2 text-[15px] leading-snug text-rule-fg">
+                On top of EU261: the airline may still owe you up to €{live.quote.jurisdiction.airlineOwesEur}, by claim, unless it blames
+                strikes, weather or air traffic control.
+              </p>
+            )}
             {done ? (
               <Done label={done} />
             ) : (
