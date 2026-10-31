@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@bsv/sdk": "^4.0.1",
     "@fontsource/dm-mono": "5.2.5",
     "@fontsource/instrument-sans": "5.2.5",
     "framer-motion": "11.18.2",
