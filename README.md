@@ -6,6 +6,25 @@ You tell an AI agent your flight. It buys the data it needs, checks your passeng
 **€19, and you get €250 if you arrive 3 hours late or more, for any reason.** When the flight lands, a contract
 checks signed flight data from API3 and the payout reaches your wallet within minutes. Nobody files a claim.
 
+**▶ Demo video: [youtu.be/8pGW6oVubb0](https://youtu.be/8pGW6oVubb0)** · Pitch deck: [`Sayonara Claims.pdf`](Sayonara%20Claims.pdf) ·
+Devfolio: [sayonara-claims-0bf9](https://devfolio.co/projects/sayonara-claims-0bf9)
+
+## At the hackathon
+
+Built in 36 hours for the **Cardano** (agentic commerce, x402) and **API3** (authenticated data) tracks. What we shipped:
+
+- **An AI agent that sells flight cover in a chat.** It researches the flight, checks EU261 rights and prices a single
+  cover: €19 for €250 if you land 3h+ late, for any cause.
+- **Real payments on Cardano preprod over x402.** The research fee, the premium and the payout are all on-chain
+  transactions (see [Proof on chain](#proof-on-chain)).
+- **Signed flight data from API3 AirnodeHub.** AeroDataBox flight status bought over x402 and checked by the
+  `FlightDelayCover` contract on Base Sepolia, which pays only for a valid, fresh signature on the right request.
+- **A real delayed flight settled end to end:** LH 501 (GIG → FRA, 29 Oct) landed 7h 08m late; the contract settled
+  the policy as `PaidOut` and 50 tADA reached the traveller.
+- **A tamper test in the app:** one real response is accepted, and four forgeries (an edited value, a stale response,
+  another flight's response, a wrong signer) are rejected by the deployed contract.
+- **A web app** (Next.js) with the chat, a research view, trips, transactions, wallets and the tamper test.
+
 ## The problem
 
 When a flight arrives 3 hours late, EU261 may entitle you to €250–€600. But you have to claim it, the airline can
